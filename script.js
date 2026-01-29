@@ -15,7 +15,17 @@ const saveBtn = document.getElementById("saveProject");
 const loadBtn = document.getElementById("loadProject");
 const fileInput = document.getElementById("fileInput");
 
-const legoColors = ["#ff0000","#00ff00","#0000ff","#ffff00","#ffa500","#800080","#ffffff","#000000"];
+// Palette LEGO estesa (50 colori)
+const legoColors = [
+  "#ff0000","#00ff00","#0000ff","#ffff00","#ffa500","#800080","#ffffff","#000000",
+  "#ff9999","#99ff99","#9999ff","#ffff99","#ffcc99","#cc99ff","#cccccc","#666666",
+  "#ff6666","#66ff66","#6666ff","#ffcc66","#ccff66","#66ccff","#ff99cc","#ccff99",
+  "#99ccff","#ff9966","#66ffcc","#cc66ff","#9966ff","#66cc66","#ff66cc","#66cc99",
+  "#cc9966","#9966cc","#66ff99","#ffcccc","#ccffff","#ffffcc","#ccffcc","#ffccff",
+  "#cccc99","#999966","#666699","#996699","#669966","#996666","#669999","#9999cc",
+  "#66cccc","#cc66cc","#ffcc99","#99ffcc","#cc99ff","#ccccff","#ff99ff","#99cc99"
+];
+
 let selectedBrickSize = parseInt(brickSizeSelect.value);
 let numCells = parseInt(detailSlider.value);
 
@@ -24,7 +34,7 @@ let currentLayerIndex = 0;
 let pixelData = []; // dati del layer corrente
 canvas.image = null;
 
-// ----- FUNZIONI -----
+// ----- EVENTI CONTROLLI -----
 detailSlider.addEventListener("input",()=>{
   numCells=parseInt(detailSlider.value);
   detailValue.textContent=numCells;
@@ -47,6 +57,7 @@ upload.addEventListener("change",(e)=>{
   img.src = URL.createObjectURL(file);
 });
 
+// ----- FUNZIONE PRINCIPALE -----
 function processImage(img){
   const w=numCells;
   const h=Math.round(numCells*img.height/img.width);
@@ -74,6 +85,7 @@ function processImage(img){
   updateSummary();
 }
 
+// ----- TROVA COLORE LEGO PIU VICINO -----
 function closestLEGOColor([r,g,b]){
   let minDist=Infinity, closest=legoColors[0];
   legoColors.forEach(c=>{
@@ -86,6 +98,7 @@ function closestLEGOColor([r,g,b]){
   return closest;
 }
 
+// ----- DISEGNA GRIGLIA -----
 function drawGrid(){
   const cellSize=20;
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -99,6 +112,7 @@ function drawGrid(){
   });
 }
 
+// ----- RIEPILOGO MATTONCINI -----
 function updateSummary(){
   const count={};
   layersData.forEach(layer=>layer.forEach(row=>row.forEach(cell=>{ if(cell) count[cell]=(count[cell]||0)+1; })));
@@ -133,7 +147,7 @@ nextLayerBtn.addEventListener("click",()=>{
   updateSummary();
 });
 
-// ----- PDF -----
+// ----- GENERA PDF -----
 pdfBtn.addEventListener("click",()=>{
   const { jsPDF }=window.jspdf;
   const pdf=new jsPDF();
@@ -149,7 +163,7 @@ pdfBtn.addEventListener("click",()=>{
   pdf.save("lego-photo.pdf");
 });
 
-// ----- SAVE/LOAD -----
+// ----- SAVE/LOAD PROGETTO -----
 saveBtn.addEventListener("click",()=>{
   const blob=new Blob([JSON.stringify(layersData)],{type:"application/json"});
   const url=URL.createObjectURL(blob);
