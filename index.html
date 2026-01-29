@@ -1,1 +1,43 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>LEGO Mosaic Generator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>LEGO Mosaic Generator</h1>
+  <p>Trasforma le tue foto in mosaici LEGO professionali</p>
+</header>
+
+<main>
+  <!-- UPLOAD -->
+  <section id="upload-section">
+    <input type="file" id="imageUpload" accept="image/*">
+  </section>
+
+  <!-- OPZIONI DIMENSIONE -->
+  <section id="options-section" class="hidden">
+    <h2>Scegli la dimensione</h2>
+    <div id="optionsContainer"></div>
+  </section>
+
+  <!-- PREVIEW -->
+  <section id="preview-section" class="hidden">
+    <h2>Anteprima</h2>
+    <canvas id="previewCanvas"></canvas>
+  </section>
+
+  <!-- DETTAGLI -->
+  <section id="details-section" class="hidden">
+    <h2>Dettagli progetto</h2>
+    <div id="details"></div>
+  </section>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
 
