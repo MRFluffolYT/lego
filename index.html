@@ -2,173 +2,35 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>LEGO Mosaic Generator</title>
-<style>
-body { font-family: Inter, sans-serif; background: #f2f2f2; margin:0; padding:40px; }
-.container { max-width: 900px; margin:auto; background:white; padding:30px; border-radius:12px; }
-h1,h2,h3 { margin:10px 0; }
-.hidden { display:none; }
-#previewCanvas { border:1px solid #ccc; margin-top:20px; image-rendering: pixelated; }
-.option-card { border:2px solid #eee; padding:16px; border-radius:12px; cursor:pointer; margin-bottom:12px; transition:0.2s; }
-.option-card:hover { border-color:#e3000b; background:#f9f9f9; }
-section { margin-top:30px; }
-ul { list-style:none; padding-left:0; }
-</style>
+<title>LEGO Pixel Art Generator</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/lego_parts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-
 <div class="container">
-  <h1>LEGO Mosaic Generator</h1>
-  <p>Trasforma le tue foto in mosaici LEGO professionali</p>
+  <h1>LEGO Pixel Art Generator</h1>
+  <p>Carica la tua immagine e genera il PDF con tutti i pezzi 1×1 LEGO.</p>
 
-  <!-- UPLOAD -->
-  <section id="upload-section">
-    <input type="file" id="imageUpload" accept="image/*">
-  </section>
+  <input type="file" id="imageUpload" accept="image/*">
 
-  <!-- OPZIONI DIMENSIONE -->
-  <section id="options-section" class="hidden">
-    <h2>Scegli la dimensione</h2>
-    <div id="optionsContainer"></div>
-  </section>
-
-  <!-- PREVIEW -->
   <section id="preview-section" class="hidden">
     <h2>Anteprima</h2>
     <canvas id="previewCanvas"></canvas>
   </section>
 
-  <!-- DETTAGLI -->
-  <section id="details-section" class="hidden">
-    <h2>Dettagli progetto</h2>
-    <div id="details">
-      <ul id="pieces"></ul>
-    </div>
+  <section id="size-section" class="hidden">
+    <h2>Scegli dimensione pixel art</h2>
+    <input type="number" id="widthInput" placeholder="Width in studs">
+    <input type="number" id="heightInput" placeholder="Height in studs">
+    <button id="applySize">Applica</button>
+  </section>
+
+  <section id="pdf-section" class="hidden">
+    <button id="generatePDF">Genera PDF</button>
   </section>
 </div>
 
-<script>
-// ===============================
-// LEGO PALETTE
-// ===============================
-const LEGO_PALETTE = [
-  {name:"White", rgb:[242,243,242]},
-  {name:"Black", rgb:[27,42,52]},
-  {name:"Red", rgb:[196,40,27]},
-  {name:"Blue", rgb:[13,105,171]},
-  {name:"Yellow", rgb:[245,205,47]},
-  {name:"Dark Gray", rgb:[109,110,108]}
-];
-
-// ===============================
-// IMAGE ANALYZER
-// ===============================
-function analyzeImage(imgWidth,imgHeight){
-  const aspectRatio=imgWidth/imgHeight;
-  const totalPixels=imgWidth*imgHeight;
-  const STUDS_PER_MEGAPIXEL=300;
-  const ALLOWED_BASE=[32,48,64,96,128,144];
-  let idealStudCount=Math.sqrt(totalPixels/STUDS_PER_MEGAPIXEL);
-  let idealWidth=idealStudCount*Math.sqrt(aspectRatio);
-  let idealHeight=idealWidth/aspectRatio;
-  idealWidth=nearestAllowed(idealWidth,ALLOWED_BASE);
-  idealHeight=Math.round(idealWidth/aspectRatio);
-  const options=buildOptions(idealWidth,idealHeight,aspectRatio,ALLOWED_BASE);
-  return {aspectRatio:aspectRatio.toFixed(2), recommended: options.recommended, alternatives: options.alternatives};
-}
-function nearestAllowed(value,allowed){return allowed.reduce((prev,curr)=>Math.abs(curr-value)<Math.abs(prev-value)?curr:prev);}
-function buildOptions(width,height,ratio,allowed){
-  const index=allowed.indexOf(width);
-  const recommended=createOption(width,height,"Consigliata","Ottimo equilibrio tra qualità e numero di pezzi");
-  const alternatives=[];
-  if(index>0){const w=allowed[index-1]; alternatives.push(createOption(w,Math.round(w/ratio),"Più compatta","Meno pezzi, meno dettagli"));}
-  if(index<allowed.length-1){const w=allowed[index+1]; alternatives.push(createOption(w,Math.round(w/ratio),"Più dettagliata","Più pezzi, maggiore definizione"));}
-  return {recommended,alternatives};
-}
-function createOption(width,height,label,description){
-  return {label,width,height,studs:width*height,description,estimatedSizeCm:{width:Math.round(width*0.8),height:Math.round(height*0.8)}};
-}
-
-// ===============================
-// PIXELIZER
-// ===============================
-function distance(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2);}
-function closestColor(rgb){return LEGO_PALETTE.reduce((best,c)=>distance(rgb,c.rgb)<distance(rgb,best.rgb)?c:best);}
-function pixelizeImage(img,w,h){
-  const canvas=document.createElement("canvas"); canvas.width=w; canvas.height=h;
-  const ctx=canvas.getContext("2d"); ctx.drawImage(img,0,0,w,h);
-  const data=ctx.getImageData(0,0,w,h).data;
-  const pixels=[];
-  for(let i=0;i<data.length;i+=4){pixels.push(closestColor([data[i],data[i+1],data[i+2]]));}
-  return {pixels,width:w,height:h};
-}
-
-// ===============================
-// PREVIEW RENDERER
-// ===============================
-function renderPreview(pixelData,option){
-  const canvas=document.getElementById("previewCanvas");
-  const size=600;
-  canvas.width=size; canvas.height=size*(option.height/option.width);
-  const ctx=canvas.getContext("2d");
-  const pxW=canvas.width/option.width;
-  const pxH=canvas.height/option.height;
-  pixelData.pixels.forEach((p,i)=>{
-    const x=i%option.width*pxW;
-    const y=Math.floor(i/option.width)*pxH;
-    ctx.fillStyle=`rgb(${p.rgb.join(",")})`;
-    ctx.fillRect(x,y,pxW,pxH);
-  });
-  document.getElementById("preview-section").classList.remove("hidden");
-}
-
-// ===============================
-// UI
-// ===============================
-function renderOptions(analysis,onSelect){
-  const container=document.getElementById("optionsContainer");
-  container.innerHTML="";
-  const all=[analysis.recommended,...analysis.alternatives];
-  all.forEach(option=>{
-    const card=document.createElement("div");
-    card.className="option-card";
-    card.innerHTML=`<h3>${option.label}</h3><p>${option.width} × ${option.height} stud</p><p>${option.description}</p>`;
-    card.onclick=()=>{onSelect(option); renderDetails(option);};
-    container.appendChild(card);
-  });
-  document.getElementById("options-section").classList.remove("hidden");
-}
-
-function renderDetails(option){
-  const list=document.getElementById("pieces");
-  list.innerHTML="";
-  LEGO_PALETTE.forEach(c=>{
-    // stima casuale proporzionale agli stud
-    const count=Math.floor(Math.random()*option.studs*0.05+5);
-    const li=document.createElement("li");
-    li.textContent=`${c.name}: ${count} pezzi`;
-    list.appendChild(li);
-  });
-  document.getElementById("details-section").classList.remove("hidden");
-}
-
-// ===============================
-// APP
-// ===============================
-const upload=document.getElementById("imageUpload");
-upload.addEventListener("change",e=>{
-  const file=e.target.files[0];
-  const img=new Image();
-  img.src=URL.createObjectURL(file);
-  img.onload=()=>{
-    const analysis=analyzeImage(img.width,img.height);
-    renderOptions(analysis,option=>{
-      const pixels=pixelizeImage(img,option.width,option.height);
-      renderPreview(pixels,option);
-    });
-  };
-});
-</script>
-
+<script src="js/script.js"></script>
 </body>
 </html>
