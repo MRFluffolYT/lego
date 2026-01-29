@@ -1,145 +1,107 @@
-// ----- CONFIG -----
-const colors = ["#ff0000","#00ff00","#0000ff","#ffff00","#ffa500","#800080","#ffffff","#000000"];
-let selectedColor = colors[0];
-let currentLayerIndex = 0;
-let brickSize = 1;
-const width = 16, height = 16, cellSize = 30;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const upload = document.getElementById("imageUpload");
+const detailSlider = document.getElementById("detailSlider");
+const detailValue = document.getElementById("detailValue");
+const summaryDiv = document.getElementById("summary");
+const pdfBtn = document.getElementById("generatePDF");
 
-// ----- LAYERS -----
-let layersData = [Array(height).fill(0).map(()=>Array(width).fill(null))];
+// Palette colori LEGO base (8 colori)
+const legoColors = ["#ff0000","#00ff00","#0000ff","#ffff00","#ffa500","#800080","#ffffff","#000000"];
 
-// ----- PALETTE -----
-const toolbar = document.getElementById("toolbar");
-colors.forEach(color=>{
-  const btn = document.createElement("div");
-  btn.className="color-btn";
-  btn.style.backgroundColor=color;
-  btn.addEventListener("click",()=>{
-    selectedColor=color;
-    document.querySelectorAll(".color-btn").forEach(b=>b.classList.remove("selected"));
-    btn.classList.add("selected");
-  });
-  if(color===selectedColor) btn.classList.add("selected");
-  toolbar.appendChild(btn);
+let pixelData = []; // matrice pixel colorati
+let numCells = parseInt(detailSlider.value);
+
+detailSlider.addEventListener("input",()=>{
+  numCells = parseInt(detailSlider.value);
+  detailValue.textContent = numCells;
+  if(canvas.image) processImage(canvas.image);
 });
 
-// ----- KONVA STAGE -----
-const stage = new Konva.Stage({container:'container', width: width*cellSize, height: height*cellSize});
-const layer = new Konva.Layer();
-stage.add(layer);
+// Carica immagine
+upload.addEventListener("change",(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = new Image();
+  img.onload = ()=> { 
+    canvas.image = img; 
+    processImage(img); 
+  };
+  img.src = URL.createObjectURL(file);
+});
 
-function drawGrid(){
-  layer.destroyChildren();
-  const currentData = layersData[currentLayerIndex];
-  for(let r=0;r<height;r++){
-    for(let c=0;c<width;c++){
-      const cellColor = currentData[r][c] || "#ffffff";
-      const rect = new Konva.Rect({
-        x: c*cellSize, y: r*cellSize,
-        width: cellSize, height: cellSize,
-        fill: cellColor,
-        stroke:"#ccc"
-      });
-      rect.on('click',()=>{
-        applyBrick(r,c);
-      });
-      layer.add(rect);
-    }
-  }
-  layer.draw();
-}
+// Funzione principale
+function processImage(img){
+  // Ridimensiona immagine in pixel grid
+  const w = numCells;
+  const h = Math.round(numCells * img.height / img.width);
+  canvas.width = w * 20; // 20px per cella
+  canvas.height = h * 20;
 
-// ----- APPLY BRICK -----
-function applyBrick(r,c){
-  const size = parseInt(brickSize);
-  const data = layersData[currentLayerIndex];
-  for(let dr=0; dr<size; dr++){
-    for(let dc=0; dc<size; dc++){
-      if(r+dr<height && c+dc<width) data[r+dr][c+dc]=selectedColor;
+  // Canvas temporaneo
+  const temp = document.createElement("canvas");
+  temp.width = w;
+  temp.height = h;
+  const tctx = temp.getContext("2d");
+  tctx.drawImage(img,0,0,w,h);
+
+  pixelData = [];
+  for(let y=0;y<h;y++){
+    const row = [];
+    for(let x=0;x<w;x++){
+      const d = tctx.getImageData(x,y,1,1).data;
+      const color = closestLEGOColor(d);
+      row.push(color);
     }
+    pixelData.push(row);
   }
   drawGrid();
   updateSummary();
 }
 
-// ----- UPDATE SUMMARY -----
-const summaryDiv = document.getElementById("summary");
-function updateSummary(){
-  const count = {};
-  layersData.forEach((layerData, idx)=>{
-    layerData.forEach(row=>row.forEach(cell=>{if(cell) count[cell]=(count[cell]||0)+1}));
+// Trova il colore LEGO più vicino
+function closestLEGOColor([r,g,b]){
+  let minDist = Infinity, closest = legoColors[0];
+  legoColors.forEach(c=>{
+    const cr = parseInt(c.slice(1,3),16);
+    const cg = parseInt(c.slice(3,5),16);
+    const cb = parseInt(c.slice(5,7),16);
+    const dist = Math.sqrt((r-cr)**2+(g-cg)**2+(b-cb)**2);
+    if(dist<minDist){ minDist=dist; closest=c; }
   });
-  summaryDiv.innerHTML="<h3>Riepilogo mattoncini:</h3>"+Object.entries(count).map(([c,n])=>`${c}: ${n}`).join("<br>");
+  return closest;
 }
 
-// ----- LAYER CONTROLS -----
-const currentLayerSpan = document.getElementById("currentLayer");
-document.getElementById("prevLayer").addEventListener("click",()=>{
-  if(currentLayerIndex>0) currentLayerIndex--; 
-  currentLayerSpan.textContent="Layer "+(currentLayerIndex+1);
-  drawGrid();
-});
-document.getElementById("nextLayer").addEventListener("click",()=>{
-  if(currentLayerIndex<layersData.length-1) currentLayerIndex++;
-  currentLayerSpan.textContent="Layer "+(currentLayerIndex+1);
-  drawGrid();
-});
-document.getElementById("addLayer").addEventListener("click",()=>{
-  layersData.push(Array(height).fill(0).map(()=>Array(width).fill(null)));
-  currentLayerIndex=layersData.length-1;
-  currentLayerSpan.textContent="Layer "+(currentLayerIndex+1);
-  drawGrid();
-});
+// Disegna griglia
+function drawGrid(){
+  const cellSize = 20;
+  pixelData.forEach((row,y)=>{
+    row.forEach((color,x)=>{
+      ctx.fillStyle=color;
+      ctx.fillRect(x*cellSize,y*cellSize,cellSize,cellSize);
+      ctx.strokeStyle="#ccc";
+      ctx.strokeRect(x*cellSize,y*cellSize,cellSize,cellSize);
+    });
+  });
+}
 
-// ----- BRICK SIZE -----
-document.getElementById("brickSize").addEventListener("change",(e)=>{brickSize=e.target.value;});
+// Riepilogo mattoncini
+function updateSummary(){
+  const count = {};
+  pixelData.forEach(row=>row.forEach(cell=>{ count[cell]=(count[cell]||0)+1; }));
+  summaryDiv.innerHTML = "<h3>Riepilogo mattoncini:</h3>"+Object.entries(count).map(([c,n])=>`${c}: ${n}`).join("<br>");
+}
 
-// ----- GENERATE PDF -----
-document.getElementById("generatePDF").addEventListener("click",()=>{
+// Genera PDF
+pdfBtn.addEventListener("click",()=>{
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-  const pdfCell=10;
-
-  layersData.forEach((layerData, idx)=>{
-    layerData.forEach((row,r)=>{
-      row.forEach((color,c)=>{
-        if(color){
-          pdf.setFillColor(color);
-          pdf.rect(c*pdfCell,r*pdfCell,pdfCell,pdfCell,"F");
-        }
-      });
+  const cell = 5; // mm per cella
+  pixelData.forEach((row,y)=>{
+    row.forEach((color,x)=>{
+      pdf.setFillColor(color);
+      pdf.rect(x*cell,y*cell,cell,cell,"F");
     });
-    if(idx<layersData.length-1) pdf.addPage();
   });
-  pdf.save("lego-project.pdf");
+  pdf.save("lego-photo.pdf");
 });
-
-// ----- SAVE / LOAD LOCAL -----
-document.getElementById("saveProject").addEventListener("click",()=>{
-  const dataStr = JSON.stringify(layersData);
-  const blob = new Blob([dataStr],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url;
-  a.download="lego-project.json";
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById("loadProject").addEventListener("click",()=>{document.getElementById("fileInput").click();});
-document.getElementById("fileInput").addEventListener("change",(e)=>{
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    layersData = JSON.parse(ev.target.result);
-    currentLayerIndex=0;
-    currentLayerSpan.textContent="Layer 1";
-    drawGrid();
-    updateSummary();
-  };
-  reader.readAsText(file);
-});
-
-// ----- INIT -----
-drawGrid();
-updateSummary();
