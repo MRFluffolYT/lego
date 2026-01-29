@@ -3,26 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Foto → LEGO Pixel</title>
+<title>Brickme Clone</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Foto → LEGO Pixel</h1>
+<h1>Brickme Clone</h1>
 
-  <div id="controls">
-    <input type="file" id="imageUpload">
-    <label>Dettaglio (numero mattoncini per lato):
-      <input type="range" id="detailSlider" min="8" max="64" value="16">
-      <span id="detailValue">16</span>
-    </label>
-    <button id="generatePDF">Genera PDF</button>
-  </div>
+<div id="controls">
+  <input type="file" id="imageUpload">
+  <label>Dettaglio (mattoncini per lato):
+    <input type="range" id="detailSlider" min="8" max="64" value="16">
+    <span id="detailValue">16</span>
+  </label>
+  <button id="addLayer">➕ Aggiungi Layer</button>
+  <button id="prevLayer">⬆ Layer precedente</button>
+  <button id="nextLayer">⬇ Layer successivo</button>
+  <span id="currentLayer">Layer 1</span>
+  <label>Mattoncino:
+    <select id="brickSize">
+      <option value="1">1x1</option>
+      <option value="2">1x2</option>
+      <option value="3">2x2</option>
+    </select>
+  </label>
+  <button id="generatePDF">Genera PDF</button>
+  <button id="saveProject">Salva progetto</button>
+  <button id="loadProject">Carica progetto</button>
+  <input type="file" id="fileInput" style="display:none">
+</div>
 
-  <canvas id="canvas"></canvas>
+<canvas id="canvas"></canvas>
+<div id="summary"></div>
 
-  <div id="summary"></div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
