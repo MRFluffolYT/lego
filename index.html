@@ -2,18 +2,25 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>LEGO Pixel Art Generator - Professionale</title>
+<title>LEGO Mosaic Generator Professionale</title>
 <link rel="stylesheet" href="css/style.css">
-<script src="js/lego_parts.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="container">
-<h1>LEGO Pixel Art Generator</h1>
-<p>Carica la tua immagine e genera il PDF con tutti i pezzi 1×1 LEGO.</p>
+<h1>LEGO Mosaic Generator</h1>
+<p>Trasforma le tue foto in mosaici LEGO professionali</p>
 
 
+<section id="upload-section">
 <input type="file" id="imageUpload" accept="image/*">
+</section>
+
+
+<section id="options-section" class="hidden">
+<h2>Scegli la dimensione</h2>
+<div id="optionsContainer"></div>
+</section>
 
 
 <section id="preview-section" class="hidden">
@@ -22,18 +29,12 @@
 </section>
 
 
-<section id="size-section" class="hidden">
-<h2>Scegli dimensione pixel art</h2>
-<div id="suggestedSizes"></div>
-<p>Oppure inserisci dimensione personalizzata:</p>
-<input type="number" id="widthInput" placeholder="Width in studs">
-<input type="number" id="heightInput" placeholder="Height in studs">
-<button id="applySize">Applica</button>
-</section>
-
-
-<section id="pdf-section" class="hidden">
-<button id="generatePDF">Genera PDF Professionale</button>
+<section id="details-section" class="hidden">
+<h2>Dettagli progetto</h2>
+<div id="details">
+<ul id="pieces"></ul>
+<button id="generatePDF">Genera PDF con numeri</button>
+</div>
 </section>
 </div>
 <script src="js/script.js"></script>
