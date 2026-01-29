@@ -1,5 +1,4 @@
 body { font-family: Arial, sans-serif; text-align: center; }
-#toolbar, #layerControls, #sizeControls, #buttons { margin: 10px 0; }
-.color-btn { width:30px; height:30px; display:inline-block; margin:2px; cursor:pointer; border:2px solid #ccc; }
-.color-btn.selected { border-color:black; }
-#container { display:inline-block; margin:10px; border:1px solid #aaa; }
+#canvas { border:1px solid #aaa; margin:10px; image-rendering: pixelated; }
+#controls { margin:10px; }
+#summary { margin-top:10px; }
