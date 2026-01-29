@@ -1,7 +1,10 @@
-body { font-family: Arial, sans-serif; background:#f2f2f2; padding:20px; }
-.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
+body { font-family: Inter, sans-serif; background: #f2f2f2; margin:0; padding:40px; }
+.container { max-width: 900px; margin:auto; background:white; padding:30px; border-radius:12px; }
+h1,h2,h3 { margin:10px 0; }
 .hidden { display:none; }
-#previewCanvas { border:1px solid #ccc; max-width:100%; image-rendering: pixelated; margin-top:10px; }
+#previewCanvas { border:1px solid #ccc; margin-top:20px; image-rendering: pixelated; }
+.option-card { border:2px solid #eee; padding:16px; border-radius:12px; cursor:pointer; margin-bottom:12px; transition:0.2s; }
+.option-card:hover { border-color:#e3000b; background:#f9f9f9; }
+section { margin-top:30px; }
+ul { list-style:none; padding-left:0; }
 button { padding:10px 20px; background:#e3000b; color:white; border:none; border-radius:6px; cursor:pointer; margin:3px; }
-button:hover { background:#bf0000; }
-input { margin:5px; padding:5px; width:120px; }
